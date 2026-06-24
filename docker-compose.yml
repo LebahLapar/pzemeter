@@ -1,0 +1,39 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: pzemeter-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: pzemeter
+    volumes:
+      - mongo_data:/data/db
+    # Port tidak di-expose ke host secara default (least exposure).
+    # Buka comment di bawah hanya jika perlu akses MongoDB dari host.
+    # ports:
+    #   - "27017:27017"
+    networks:
+      - pzemeter-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: pzemeter-backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/pzemeter
+    ports:
+      - "3000:3000"
+    networks:
+      - pzemeter-net
+
+volumes:
+  mongo_data:
+
+networks:
+  pzemeter-net:
+    driver: bridge

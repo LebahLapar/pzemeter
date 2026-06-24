@@ -1,0 +1,17 @@
+.env
+PROJECT_PLAN.md
+reference/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+PROGRESS.md
+community-code.ino
+.kiro/
+.vscode
+
+# Kredensial firmware (jangan commit). Pakai config.example.h sebagai template.
+firmware/pzemeter/config.h
+
+# Node
+node_modules/
+npm-debug.log*

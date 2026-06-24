@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PZEMETER - Monitoring Energi Listrik</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ============ LOGIN VIEW (default tampil; di-gating oleh auth.js) ============ -->
+  <div id="login-view" class="login-view">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-name">PZE<span class="brand-accent">METER</span></div>
+      </div>
+      <p class="login-subtitle">Masuk untuk mengakses dashboard monitoring energi</p>
+
+      <!-- area pesan error generik (Req 9.6) -->
+      <div id="login-error" class="alert alert-danger" style="display:none;" role="alert"></div>
+
+      <form id="login-form" autocomplete="off" novalidate>
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" name="username" class="form-input"
+                 maxlength="254" autocomplete="username" required>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label for="login-password">Kata Sandi</label>
+          <input type="password" id="login-password" name="password" class="form-input"
+                 maxlength="128" autocomplete="current-password" required>
+        </div>
+        <button type="submit" id="login-submit" class="btn btn-primary login-submit">Masuk</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ APP VIEW (dashboard; disembunyikan sampai terautentikasi) ============ -->
+  <div id="app-view" style="display:none;">
+  <div class="app-shell">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-name">PZE<span class="brand-accent">METER</span></div>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="#dashboard" class="nav-link active" data-page="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></a></li>
+        <li><a href="#biaya" class="nav-link" data-page="biaya"><span class="nav-icon">💰</span><span>Estimasi Biaya</span></a></li>
+        <li><a href="#laporan" class="nav-link" data-page="laporan"><span class="nav-icon">📈</span><span>Laporan</span></a></li>
+        <li><a href="#pengaturan" class="nav-link" data-page="pengaturan"><span class="nav-icon">⚙️</span><span>Pengaturan</span></a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="conn-row">
+          <span class="conn-dot" id="conn-dot"></span>
+          <span id="conn-text">Menghubungkan...</span>
+        </div>
+        <button type="button" id="logout-btn" class="btn-logout">⏻ Keluar</button>
+        <small>Diskominfo Sumsel</small>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main-content">
+      <!-- topbar mobile -->
+      <div class="topbar">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Menu">☰</button>
+        <span class="topbar-title">PZEMETER</span>
+      </div>
+
+      <!-- ====== DASHBOARD ====== -->
+      <section id="dashboard-section" class="page-section active">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Dashboard Energi</h1>
+            <p class="page-subtitle">Monitoring real-time 6 parameter listrik</p>
+          </div>
+          <div class="timestamp" id="ts-dashboard">Update: --:--:--</div>
+        </div>
+
+        <div class="card-grid">
+          <div class="metric card">
+            <div class="metric-top"><span class="metric-title">Tegangan</span><span class="metric-ic">V</span></div>
+            <div class="metric-value" id="m-voltage">--<span class="unit">V</span></div>
+            <div class="metric-sub">Line voltage</div>
+          </div>
+          <div class="metric card">
+            <div class="metric-top"><span class="metric-title">Arus</span><span class="metric-ic">A</span></div>
+            <div class="metric-value" id="m-current">--<span class="unit">A</span></div>
+            <div class="metric-sub">Line current</div>
+          </div>
+          <div class="metric card">
+            <div class="metric-top"><span class="metric-title">Daya</span><span class="metric-ic">W</span></div>
+            <div class="metric-value" id="m-power">--<span class="unit">W</span></div>
+            <div class="metric-sub">Active power</div>
+          </div>
+          <div class="metric card">
+            <div class="metric-top"><span class="metric-title">Energi</span><span class="metric-ic">⚡</span></div>
+            <div class="metric-value" id="m-energy">--<span class="unit">kWh</span></div>
+            <div class="metric-sub">Akumulatif</div>
+          </div>
+          <div class="metric card">
+            <div class="metric-top"><span class="metric-title">Frekuensi</span><span class="metric-ic">∿</span></div>
+            <div class="metric-value" id="m-freq">--<span class="unit">Hz</span></div>
+            <div class="metric-sub">Grid frequency</div>
+          </div>
+          <div class="metric card">
+            <div class="metric-top"><span class="metric-title">Faktor Daya</span><span class="metric-ic">cos φ</span></div>
+            <div class="metric-value" id="m-pf">--</div>
+            <div class="metric-sub">Power factor</div>
+          </div>
+        </div>
+
+        <div class="row-2col">
+          <!-- Status sistem -->
+          <div class="card">
+            <div class="card-head"><h3>Status Sistem</h3></div>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-dot" id="st-conn-dot"></span>
+                <span class="status-label">Koneksi Perangkat</span>
+                <span class="status-value" id="st-conn">--</span>
+              </div>
+              <div class="status-item">
+                <span class="status-dot" id="st-volt-dot"></span>
+                <span class="status-label">Status Tegangan</span>
+                <span class="status-value" id="st-volt">--</span>
+              </div>
+              <div class="status-item">
+                <span class="status-dot" id="st-curr-dot"></span>
+                <span class="status-label">Status Arus</span>
+                <span class="status-value" id="st-curr">--</span>
+              </div>
+              <div class="status-item">
+                <span class="status-dot status-active"></span>
+                <span class="status-label">Total Energi</span>
+                <span class="status-value" id="st-energy">-- kWh</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grafik mini -->
+          <div class="card">
+            <div class="card-head"><h3>Daya &amp; Tegangan (Live)</h3></div>
+            <canvas id="chart-mini" height="170"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== ESTIMASI BIAYA ====== -->
+      <section id="biaya-section" class="page-section">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Estimasi Biaya</h1>
+            <p class="page-subtitle">Perkiraan biaya listrik berdasarkan daya saat ini</p>
+          </div>
+          <div class="timestamp" id="ts-biaya">Update: --:--:--</div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card cost-card cost-navy">
+            <div class="metric-title light">Estimasi / Jam</div>
+            <div class="cost-value" id="c-hour">Rp --</div>
+          </div>
+          <div class="card cost-card cost-blue">
+            <div class="metric-title light">Estimasi / Hari</div>
+            <div class="cost-value" id="c-day">Rp --</div>
+          </div>
+          <div class="card cost-card cost-accent">
+            <div class="metric-title light">Estimasi / Bulan</div>
+            <div class="cost-value" id="c-month">Rp --</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Rincian</h3></div>
+          <table class="info-table">
+            <tr><td>Tarif berlaku</td><td id="b-tariff">Rp --/kWh</td></tr>
+            <tr><td>Daya terukur saat ini</td><td id="b-power">-- W</td></tr>
+            <tr><td>Energi akumulatif (kWh)</td><td id="b-energy">-- kWh</td></tr>
+          </table>
+          <p class="note">Estimasi dihitung dari daya sesaat diasumsikan konstan. Tarif default PLN P-1/TR Rp 1.444,70/kWh, dapat diubah di Pengaturan.</p>
+        </div>
+      </section>
+
+      <!-- ====== LAPORAN ====== -->
+      <section id="laporan-section" class="page-section">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Laporan &amp; Analitik</h1>
+            <p class="page-subtitle">Tren konsumsi energi dari waktu ke waktu</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Grafik Daya (W) &amp; Tegangan (V)</h3></div>
+          <canvas id="chart-full" height="110"></canvas>
+        </div>
+      </section>
+
+      <!-- ====== PENGATURAN ====== -->
+      <section id="pengaturan-section" class="page-section">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Pengaturan Sistem</h1>
+            <p class="page-subtitle">Konfigurasi ambang batas &amp; tarif listrik</p>
+          </div>
+        </div>
+
+        <div id="settings-alert" class="alert" style="display:none;"></div>
+
+        <form id="settings-form">
+          <div class="card settings-block">
+            <div class="settings-head"><span>⚠️</span><h3>Ambang Batas Tegangan</h3></div>
+            <div class="settings-grid">
+              <div class="form-group">
+                <label>Batas Tegangan Tinggi</label>
+                <div class="input-group">
+                  <input type="number" id="overVoltage" step="1" class="form-input">
+                  <span class="input-append">V</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Batas Tegangan Rendah</label>
+                <div class="input-group">
+                  <input type="number" id="underVoltage" step="1" class="form-input">
+                  <span class="input-append">V</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card settings-block">
+            <div class="settings-head"><span>🔌</span><h3>Ambang Batas Arus</h3></div>
+            <div class="settings-grid">
+              <div class="form-group">
+                <label>Batas Arus Maksimum</label>
+                <div class="input-group">
+                  <input type="number" id="overCurrent" step="0.1" class="form-input">
+                  <span class="input-append">A</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card settings-block">
+            <div class="settings-head"><span>💰</span><h3>Tarif Listrik</h3></div>
+            <div class="settings-grid">
+              <div class="form-group">
+                <label>Tarif per kWh</label>
+                <div class="input-group">
+                  <span class="input-prepend">Rp</span>
+                  <input type="number" id="tariffPerKwh" step="0.01" class="form-input">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
+        </form>
+      </section>
+
+      <footer class="dashboard-footer">
+        <span id="last-update">Update terakhir: --</span> · PZEMETER © 2026 Diskominfo Sumsel
+      </footer>
+    </main>
+  </div>
+  </div><!-- /#app-view -->
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
