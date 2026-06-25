@@ -260,7 +260,39 @@
 
           <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
         </form>
+
+        <!-- Kartu zona berbahaya: Factory Reset (Req 5.1) -->
+        <div class="card settings-block danger-zone">
+          <div class="settings-head"><span>⚠️</span><h3>Factory Reset</h3></div>
+          <p class="danger-text">
+            Tindakan ini mereset <strong>semua pengaturan</strong> ke nilai default,
+            <strong>menghapus permanen seluruh data energi</strong> tersimpan, dan
+            <strong>tidak dapat dibatalkan</strong>.
+          </p>
+          <button type="button" id="factory-reset-btn" class="btn btn-danger">Factory Reset</button>
+          <div id="factory-reset-alert" class="alert" style="display:none;" role="alert"></div>
+        </div>
       </section>
+
+      <!-- Modal konfirmasi Factory Reset (Req 5.2) -->
+      <div class="modal fade" id="factory-reset-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">⚠️ Konfirmasi Factory Reset</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+              Semua pengaturan akan dikembalikan ke default dan seluruh data energi
+              akan dihapus permanen. Tindakan ini tidak dapat dibatalkan. Lanjutkan?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+              <button type="button" id="factory-reset-confirm" class="btn btn-danger">Ya, Reset Sekarang</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <footer class="dashboard-footer">
         <span id="last-update">Update terakhir: --</span> · PZEMETER © 2026 Diskominfo Sumsel
@@ -270,6 +302,7 @@
   </div><!-- /#app-view -->
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/app.js"></script>
   <script src="js/auth.js"></script>

@@ -8,6 +8,15 @@ const { estimateCost } = require('../tariff');
 
 const router = express.Router();
 
+// Default_Settings eksplisit untuk factory reset (Req 2.1-2.4, 2.6).
+// Sengaja didefinisikan di sini, terlepas dari default schema Settings.
+const DEFAULT_SETTINGS = {
+  overVoltage: 250,
+  underVoltage: 180,
+  overCurrent: 10,
+  tariffPerKwh: 1444.70,
+};
+
 // Helper: clamp angka untuk cegah query abuse
 function clampInt(val, def, min, max) {
   const n = parseInt(val, 10);
@@ -111,4 +120,49 @@ router.post('/settings', async (req, res) => {
   }
 });
 
+// Inti logika factory reset (dapat diuji terpisah dari HTTP layer).
+// 1) Reset Settings ke Default_Settings (atomik per-dokumen, sebelum delete).
+// 2) Hapus seluruh data Reading. Kembalikan jumlah dokumen yang dihapus.
+// Urutan reset-lalu-hapus menjaga konsistensi bila Settings gagal (Req 2.8, 6.4).
+async function performFactoryReset() {
+  await Settings.findByIdAndUpdate(
+    'global',
+    { $set: { ...DEFAULT_SETTINGS, updatedAt: new Date() } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  const result = await Reading.deleteMany({});
+  return result.deletedCount || 0;
+}
+
+// 405 untuk method non-POST pada /factory-reset (Req 1.2).
+router.all('/factory-reset', (req, res, next) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'method not allowed' });
+  }
+  next();
+});
+
+// POST /api/factory-reset - reset Settings ke default & hapus semua Reading.
+// Mewarisi requireAuth + doubleCsrfProtection dari server.js (401/403).
+router.post('/factory-reset', async (req, res) => {
+  const operator = (req.session && req.session.username) || 'unknown';
+  try {
+    const deletedCount = await performFactoryReset();
+
+    // Audit log sukses: hanya operator + outcome + timestamp (tanpa kredensial)
+    console.log('[AUDIT] factory-reset OK operator=%s deleted=%d at=%s', operator, deletedCount, new Date().toISOString());
+
+    res.status(200).json({ ok: true, deletedCount });
+  } catch (e) {
+    // Audit log gagal: hanya operator + outcome + timestamp (tanpa kredensial)
+    console.error('[AUDIT] factory-reset FAIL operator=%s at=%s', operator, new Date().toISOString());
+    // Respons error generik tanpa detail internal (OWASP - error hygiene)
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
 module.exports = router;
+// Ekspor tambahan untuk pengujian (tidak mengubah perilaku endpoint).
+module.exports.performFactoryReset = performFactoryReset;
+module.exports.DEFAULT_SETTINGS = DEFAULT_SETTINGS;

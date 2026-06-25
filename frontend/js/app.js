@@ -222,6 +222,84 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
   setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
 });
 
+// ---------- Factory Reset (tab Pengaturan) ----------
+// Wiring tombol/modal ada di bagian bawah setelah runFactoryReset (Task 7.2).
+let factoryResetBusy = false; // guard double-submit (Req 5.5)
+
+function showFactoryResetAlert(cls, msg) {
+  const el = document.getElementById('factory-reset-alert');
+  if (!el) return;
+  el.className = 'alert ' + cls;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function runFactoryReset() {
+  if (factoryResetBusy) return; // cegah eksekusi destruktif ganda (Req 5.5)
+  factoryResetBusy = true;
+  const btn = document.getElementById('factory-reset-btn');
+  const confirmBtn = document.getElementById('factory-reset-confirm');
+  if (btn) btn.disabled = true;
+  if (confirmBtn) confirmBtn.disabled = true;
+
+  // Timeout 30 detik (Req 4.6, 5.7) via AbortController.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);
+
+  try {
+    const res = await apiFetch('/api/factory-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: ctrl.signal,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      // Refresh settings ke default + perbarui UI (Req 4.3, 5.6).
+      settings = { overVoltage: 250, underVoltage: 180, overCurrent: 10, tariffPerKwh: 1444.70 };
+      await loadSettings();              // sinkron dari server
+      if (lastReading) updateUI(lastReading);
+      showFactoryResetAlert('alert-success',
+        'Factory reset berhasil. ' + (data.deletedCount || 0) + ' data energi dihapus.');
+    } else {
+      // Gagal: pertahankan view, tampilkan pesan error (Req 4.4, 5.7).
+      showFactoryResetAlert('alert-danger', 'Factory reset gagal. Coba lagi.');
+    }
+  } catch (err) {
+    // 401 sudah ditangani apiFetch (redirect login, Req 4.5).
+    if (err && err.message === 'unauthorized') return;
+    // abort (timeout) atau error koneksi (Req 4.6, 5.7).
+    showFactoryResetAlert('alert-danger',
+      'Factory reset tidak selesai (timeout/koneksi). Silakan coba lagi.');
+  } finally {
+    clearTimeout(timer);
+    factoryResetBusy = false;
+    if (btn) btn.disabled = false;       // re-enable agar bisa retry (Req 5.7)
+    if (confirmBtn) confirmBtn.disabled = false;
+  }
+}
+
+// Wiring tombol & modal Factory Reset (Req 5.2, 5.3, 5.4).
+// Init bootstrap.Modal sekali; klik tombol membuka modal tanpa request;
+// konfirmasi menutup modal lalu menjalankan reset; Batal/dismiss ditangani
+// data-bs-dismiss di HTML (tidak perlu JS).
+const frModalEl = document.getElementById('factory-reset-modal');
+const frModal = (frModalEl && window.bootstrap) ? new bootstrap.Modal(frModalEl) : null;
+
+const factoryResetBtn = document.getElementById('factory-reset-btn');
+if (factoryResetBtn) {
+  factoryResetBtn.addEventListener('click', () => {
+    if (frModal) frModal.show(); // Req 5.2: tidak ada request sebelum konfirmasi
+  });
+}
+
+const factoryResetConfirmBtn = document.getElementById('factory-reset-confirm');
+if (factoryResetConfirmBtn) {
+  factoryResetConfirmBtn.addEventListener('click', async () => {
+    if (frModal) frModal.hide();
+    await runFactoryReset(); // Req 5.3
+  });
+}
+
 // ---------- Socket.IO realtime ----------
 // socket dibuat di dalam initDashboard (setelah autentikasi), bukan saat load.
 let socket = null;

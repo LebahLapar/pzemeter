@@ -112,6 +112,47 @@ Tanpa Docker (dev lokal): butuh MongoDB jalan lokal, lalu:
 cd backend && npm install && npm start
 ```
 
+## Factory Reset
+
+Fitur **Factory Reset** mengembalikan sistem ke kondisi awal dalam satu aksi: mereset seluruh pengaturan ke nilai default dan **menghapus permanen** seluruh data energi tersimpan. Operasi ini **destruktif dan tidak dapat dibatalkan**.
+
+### Endpoint `POST /api/factory-reset`
+
+Terproteksi oleh lapisan global yang sama dengan `/api/*` lainnya: `requireAuth` (sesi) + `doubleCsrfProtection` (CSRF). Auth dievaluasi sebelum CSRF (default-deny).
+
+- **Method**: hanya `POST`. Method lain (`GET`/`PUT`/`DELETE`/`PATCH`) dibalas **405** oleh guard method.
+- **Header wajib** (state-changing): `X-CSRF-Token`, diambil dari `GET /api/auth/me`.
+- **Aksi**: reset dokumen `Settings` (`_id: "global"`) ke default secara atomik per-dokumen (`overVoltage=250`, `underVoltage=180`, `overCurrent=10`, `tariffPerKwh=1444.70`, `updatedAt` diperbarui), lalu hapus semua dokumen `Reading` (`deleteMany`). Reset Settings dijalankan lebih dulu agar bila gagal tidak ada penghapusan data.
+
+#### Kontrak respons
+
+| Kondisi | Status | Body |
+|---------|--------|------|
+| Sukses | 200 | `{ "ok": true, "deletedCount": <int ≥ 0> }` |
+| Method non-POST | 405 | `{ "error": "method not allowed" }` |
+| Tanpa sesi (belum login) | 401 | `{ "error": "unauthorized" }` |
+| CSRF token tidak valid/absen | 403 | `{ "error": "invalid csrf token" }` |
+| Error internal | 500 | `{ "error": "server error" }` (tanpa `deletedCount`) |
+
+`deletedCount` adalah jumlah dokumen `Reading` yang dihapus (0 bila koleksi sudah kosong). Pada respons error, field `deletedCount` tidak disertakan dan pesan error selalu generik (tanpa stack trace atau detail internal). Setiap operasi dicatat ke audit log sisi server (timestamp, operator, outcome) tanpa nilai sensitif.
+
+Contoh sukses via curl (login dulu untuk dapat cookie sesi + CSRF token dari `/api/auth/me`):
+```bash
+curl -X POST http://localhost:3000/api/factory-reset \
+  -b cookies.txt \
+  -H "X-CSRF-Token: <token-dari-/api/auth/me>"
+# -> 200 {"ok":true,"deletedCount":42}
+```
+
+### Kartu UI Factory Reset (tab Pengaturan)
+
+Di tab **Pengaturan** terdapat kartu *danger zone* dengan ikon peringatan, teks penjelasan (reset semua pengaturan ke default, hapus permanen data energi, tidak dapat dibatalkan), dan tombol merah **Factory Reset**.
+
+- Klik tombol menampilkan **modal konfirmasi** lebih dulu — tidak ada request yang dikirim sebelum pengguna mengonfirmasi.
+- Saat dikonfirmasi, dashboard mengirim `POST /api/factory-reset` dengan header `X-CSRF-Token` (via helper `apiFetch`), dengan timeout 30 detik.
+- Selama request berjalan, tombol dan kontrol konfirmasi dinonaktifkan untuk mencegah pengiriman ganda.
+- Sukses → pesan sukses + jumlah data terhapus, lalu pengaturan UI di-refresh ke default. Gagal/timeout → pesan error dan tombol diaktifkan kembali untuk dicoba lagi. 401 → diarahkan ke halaman login.
+
 ## Cara Flash Firmware ESP32 (Arduino IDE)
 
 1. Install board **ESP32 by Espressif Systems** di Board Manager.
