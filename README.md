@@ -107,6 +107,23 @@ kosong. Untuk reset, hapus dokumen di koleksi `users` lalu restart backend.
 - Request yang mengubah state (`POST /api/settings`, logout) butuh CSRF token (`X-CSRF-Token`), diambil dari `GET /api/auth/me`.
 - Login gagal selalu memberi pesan generik (tidak membocorkan field mana yang salah).
 
+### Konfirmasi Logout
+
+Menekan tombol Logout (`⏻ Keluar`) di sidebar **tidak langsung** mengeluarkan
+sesi. Sebagai gantinya muncul **modal konfirmasi** (Bootstrap 5, palet
+navy/biru) yang meminta persetujuan eksplisit:
+
+- Klik Logout → modal konfirmasi tampil; **tidak ada** request logout yang
+  dikirim sebelum dikonfirmasi.
+- Klik **Ya, Keluar** → modal ditutup lalu `POST /api/auth/logout` dikirim
+  dengan header `X-CSRF-Token`; setelah itu dashboard kembali ke halaman login.
+  Apa pun hasil request (sukses, error, atau jaringan gagal), sesi sisi klien
+  dianggap berakhir dan login view ditampilkan (default ke keadaan aman).
+- **Batal**, tombol **tutup (×)**, tombol **Escape**, atau klik **area backdrop**
+  → modal ditutup tanpa mengirim request apa pun; sesi tetap aktif.
+- Selama request logout berjalan, tombol konfirmasi dinonaktifkan untuk mencegah
+  pengiriman ganda (anti double-submit).
+
 Tanpa Docker (dev lokal): butuh MongoDB jalan lokal, lalu:
 ```bash
 cd backend && npm install && npm start

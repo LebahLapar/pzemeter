@@ -28,6 +28,11 @@ services:
       MONGO_URI: mongodb://mongo:27017/pzemeter
     ports:
       - "3000:3000"
+    # Bind-mount frontend (read-only) agar perubahan HTML/CSS/JS langsung
+    # ter-serve tanpa rebuild image. Tujuan container: /frontend
+    # (server.js serve path.join(__dirname,'..','..','frontend')).
+    volumes:
+      - ./frontend:/frontend:ro
     networks:
       - pzemeter-net
 

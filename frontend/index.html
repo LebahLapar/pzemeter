@@ -294,6 +294,26 @@
         </div>
       </div>
 
+      <!-- Modal konfirmasi Logout (Req 1.4, 5.1, 5.2, 5.5) -->
+      <div class="modal fade" id="logout-confirm-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Konfirmasi Keluar</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+              Anda yakin ingin keluar dari dashboard? Anda perlu masuk kembali untuk
+              mengakses monitoring.
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+              <button type="button" id="logout-confirm" class="btn btn-primary">Ya, Keluar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <footer class="dashboard-footer">
         <span id="last-update">Update terakhir: --</span> · PZEMETER © 2026 Diskominfo Sumsel
       </footer>

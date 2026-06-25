@@ -47,6 +47,20 @@ function createAuthRouter(generateToken) {
   const router = express.Router();
 
   // -------------------------------------------------------------------
+  // Cegah caching SEMUA respons auth (login/logout/me). Status sesi
+  // bersifat sensitif dan tidak boleh disimpan cache browser/proxy.
+  // Tanpa ini, browser dapat menyajikan ulang respons /me lama yang
+  // "authenticated:true" saat refresh sehingga melompat ke dashboard
+  // walau sesi sudah berakhir (OWASP: jangan cache data sensitif).
+  // -------------------------------------------------------------------
+  router.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+  });
+
+  // -------------------------------------------------------------------
   // POST /login (Req 1.1, 1.2, 1.3, 1.6, 3.3, 3.5, 4.7)
   // -------------------------------------------------------------------
   router.post('/login', loginLimiter, async (req, res) => {

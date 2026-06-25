@@ -93,6 +93,7 @@
       method: 'GET',
       headers: { Accept: 'application/json' },
       credentials: 'same-origin',
+      cache: 'no-store', // jangan pakai respons /me dari cache (cegah auto-masuk dashboard saat refresh)
     })
       .then(function (res) {
         if (!res.ok) return null;
@@ -168,40 +169,81 @@
 
   // ---------- Logout ----------
   // Logout adalah request yang mengubah state -> wajib menyertakan CSRF token
-  // (Req 7.1). Token diambil dari window.CSRF_TOKEN yang diisi saat sesi aktif.
+  // (Req 2.1). Token diambil dari window.CSRF_TOKEN yang diisi saat sesi aktif.
+  //
+  // Logika fetch/cleanup dipindah ke performLogout() (Task 2.1) sehingga ada
+  // satu sumber kebenaran untuk logout. Tombol konfirmasi modal memanggil
+  // fungsi ini. Klik tombol logout TIDAK lagi langsung logout; ia hanya
+  // menampilkan modal konfirmasi (Req 1.1, 1.3).
+  //
+  // Init modal null-safe seperti pola app.js untuk Factory Reset
+  // (frModal = (frModalEl && window.bootstrap) ? new bootstrap.Modal(...) : null)
+  // agar lingkungan tanpa Bootstrap (mis. jsdom) tidak crash (Req 5.1).
+  var logoutModalEl = document.getElementById('logout-confirm-modal');
+  var logoutConfirmBtn = document.getElementById('logout-confirm');
+  var logoutModal = (logoutModalEl && window.bootstrap)
+    ? new window.bootstrap.Modal(logoutModalEl)
+    : null;
+
+  var logoutBusy = false; // guard double-submit (Req 4.1, 4.2)
+
+  // Alur logout yang sudah ada, dipindah ke fungsi tersendiri. Menyertakan
+  // X-CSRF-Token (Req 2.1); apa pun hasilnya (sukses/error/jaringan gagal),
+  // bersihkan token & tampilkan login (Req 2.3, 2.4).
+  function performLogout() {
+    if (logoutBusy) return; // abaikan aktivasi ganda (Req 4.2)
+    logoutBusy = true;
+    if (logoutConfirmBtn) logoutConfirmBtn.disabled = true; // (Req 4.1)
+
+    fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'X-CSRF-Token': window.CSRF_TOKEN || '',
+      },
+      credentials: 'same-origin',
+    })
+      .then(function () {
+        // Apa pun status responsnya, kembali ke login (sesi dianggap berakhir).
+        window.CSRF_TOKEN = null;
+        dashboardStarted = false;
+        if (typeof window.onAuthLost === 'function') {
+          try {
+            window.onAuthLost();
+          } catch (e) {
+            console.error('[auth] onAuthLost gagal:', e);
+          }
+        }
+        showLogin();
+      })
+      .catch(function () {
+        // Tetap arahkan ke login meskipun request gagal (Req 2.4).
+        window.CSRF_TOKEN = null;
+        showLogin();
+      })
+      .finally(function () {
+        logoutBusy = false;
+        if (logoutConfirmBtn) logoutConfirmBtn.disabled = false;
+      });
+  }
+
+  // Tombol logout: buka modal konfirmasi, JANGAN logout langsung (Req 1.1, 1.3).
+  // Logout sebenarnya dijalankan saat pengguna menekan tombol konfirmasi
+  // (wiring tombol konfirmasi ditangani Task 2.3).
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
-      logoutBtn.disabled = true;
+      if (logoutModal) logoutModal.show();
+    });
+  }
 
-      fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'X-CSRF-Token': window.CSRF_TOKEN || '',
-        },
-        credentials: 'same-origin',
-      })
-        .then(function () {
-          // Apa pun hasilnya, kembali ke login (sesi dianggap berakhir).
-          window.CSRF_TOKEN = null;
-          dashboardStarted = false;
-          if (typeof window.onAuthLost === 'function') {
-            try {
-              window.onAuthLost();
-            } catch (e) {
-              console.error('[auth] onAuthLost gagal:', e);
-            }
-          }
-          showLogin();
-        })
-        .catch(function () {
-          // Tetap arahkan ke login meskipun request gagal.
-          window.CSRF_TOKEN = null;
-          showLogin();
-        })
-        .finally(function () {
-          logoutBtn.disabled = false;
-        });
+  // Tombol konfirmasi: tutup modal lalu jalankan logout (Req 2.1, 2.2).
+  // modal.hide() dipanggil tanpa menunggu respons request (Req 2.2).
+  // Batal/Escape/backdrop ditangani native Bootstrap via data-bs-dismiss,
+  // sehingga jalur dismissal tidak pernah memanggil performLogout (Req 3.3, 5.4).
+  if (logoutConfirmBtn) {
+    logoutConfirmBtn.addEventListener('click', function () {
+      if (logoutModal) logoutModal.hide(); // tutup tanpa menunggu respons (Req 2.2)
+      performLogout();
     });
   }
 
