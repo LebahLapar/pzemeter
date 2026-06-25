@@ -40,6 +40,7 @@
 
   var loginView = document.getElementById('login-view');
   var appView = document.getElementById('app-view');
+  var authLoading = document.getElementById('auth-loading');
   var loginForm = document.getElementById('login-form');
   var loginError = document.getElementById('login-error');
   var loginSubmit = document.getElementById('login-submit');
@@ -51,12 +52,21 @@
   var dashboardStarted = false;
 
   // ---------- Perpindahan tampilan ----------
+  // Setiap perpindahan menyembunyikan overlay loading (#auth-loading) agar
+  // tidak ada kedipan: saat refresh, loading tampil dulu sampai status sesi
+  // dari /me diketahui, baru login/dashboard ditampilkan.
+  function hideLoading() {
+    if (authLoading) authLoading.style.display = 'none';
+  }
+
   function showLogin() {
+    hideLoading();
     if (appView) appView.style.display = 'none';
     if (loginView) loginView.style.display = 'flex';
   }
 
   function showApp() {
+    hideLoading();
     if (loginView) loginView.style.display = 'none';
     if (appView) appView.style.display = 'block';
   }

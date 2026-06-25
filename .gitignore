@@ -8,6 +8,7 @@ PROGRESS.md
 community-code.ino
 .kiro/
 .vscode
+pzemeter/backend/tools/
 
 # Kredensial firmware (jangan commit). Pakai config.example.h sebagai template.
 firmware/pzemeter/config.h

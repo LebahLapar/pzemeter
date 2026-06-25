@@ -9,8 +9,13 @@
 </head>
 <body>
 
-  <!-- ============ LOGIN VIEW (default tampil; di-gating oleh auth.js) ============ -->
-  <div id="login-view" class="login-view">
+  <!-- ============ LOADING VIEW (tampil saat cek sesi /me; cegah flicker) ============ -->
+  <div id="auth-loading" class="auth-loading">
+    <div class="auth-spinner" role="status" aria-label="Memuat"></div>
+  </div>
+
+  <!-- ============ LOGIN VIEW (disembunyikan sampai status sesi diketahui; di-gating oleh auth.js) ============ -->
+  <div id="login-view" class="login-view" style="display:none;">
     <div class="login-card">
       <div class="login-brand">
         <div class="brand-icon">⚡</div>
