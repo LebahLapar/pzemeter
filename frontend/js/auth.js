@@ -130,6 +130,23 @@
     });
   }
 
+  // ---------- Toggle tampil/sembunyi kata sandi ----------
+  // Tombol mata pada field password (desain login dua-panel). Murni UI.
+  var togglePasswordBtn = document.getElementById('toggle-password');
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', function () {
+      var pwd = document.getElementById('login-password');
+      if (!pwd) return;
+      var show = pwd.type === 'password';
+      pwd.type = show ? 'text' : 'password';
+      togglePasswordBtn.classList.toggle('is-shown', show);
+      togglePasswordBtn.setAttribute(
+        'aria-label',
+        show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'
+      );
+    });
+  }
+
   // ---------- Submit login ----------
   if (loginForm) {
     loginForm.addEventListener('submit', function (e) {

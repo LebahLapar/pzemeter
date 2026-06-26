@@ -16,29 +16,93 @@
 
   <!-- ============ LOGIN VIEW (disembunyikan sampai status sesi diketahui; di-gating oleh auth.js) ============ -->
   <div id="login-view" class="login-view" style="display:none;">
-    <div class="login-card">
-      <div class="login-brand">
-        <div class="brand-icon">⚡</div>
-        <div class="brand-name">PZE<span class="brand-accent">METER</span></div>
-      </div>
-      <p class="login-subtitle">Masuk untuk mengakses dashboard monitoring energi</p>
+    <header class="login-top-header">
+      <img src="logo-kominfo.svg" alt="Logo Kominfo" class="login-top-logo">
+      <div class="login-top-title">PZEMETER <span>DISKOMINFO SUMSEL</span></div>
+    </header>
 
-      <!-- area pesan error generik (Req 9.6) -->
-      <div id="login-error" class="alert alert-danger" style="display:none;" role="alert"></div>
+    <div class="login-shell">
+      <!-- Hero panel -->
+      <aside class="login-hero" aria-hidden="true">
+        <div class="login-hero-bg">
+          <span class="orb orb-1"></span>
+          <span class="orb orb-2"></span>
+          <span class="grid-lines"></span>
+        </div>
+        <div class="login-hero-content">
+          <div class="login-brand login-brand-lg">
+            <img src="logo-kominfo.svg" alt="Logo Kominfo" class="brand-icon-img" style="height:32px;width:auto;">
+            <div class="brand-name">PZEMETER<span class="brand-accent"> DISKOMINFO SUMSEL</span></div>
+          </div>
+          <h2 class="hero-title">Monitoring Energi<br>Real-time, Akurat.</h2>
+          <p class="hero-tagline">Pantau daya, tegangan, dan estimasi biaya listrik Anda langsung dari satu dashboard.</p>
+          <ul class="hero-stats">
+            <li><span class="stat-num">24/7</span><span class="stat-lbl">Live Data</span></li>
+            <li><span class="stat-num">&plusmn;1%</span><span class="stat-lbl">Akurasi</span></li>
+            <li><span class="stat-num">PZEM</span><span class="stat-lbl">Sensor</span></li>
+          </ul>
+        </div>
+      </aside>
 
-      <form id="login-form" autocomplete="off" novalidate>
-        <div class="form-group">
-          <label for="login-username">Username</label>
-          <input type="text" id="login-username" name="username" class="form-input"
-                 maxlength="254" autocomplete="username" required>
+      <!-- Form panel -->
+      <section class="login-panel">
+        <div class="login-card">
+          <div class="login-brand login-brand-mobile">
+            <img src="logo-kominfo.svg" alt="Logo Kominfo" class="brand-icon-img" style="height:28px;width:auto;">
+            <div class="brand-name">PZEMETER<span class="brand-accent"> DISKOMINFO SUMSEL</span></div>
+          </div>
+
+          <header class="login-head">
+            <h1 class="login-title">Selamat datang kembali</h1>
+            <p class="login-subtitle">Masuk untuk mengakses dashboard monitoring energi.</p>
+          </header>
+
+          <!-- area pesan error generik (Req 9.6) -->
+          <div id="login-error" class="login-alert" style="display:none;" role="alert"></div>
+
+          <form id="login-form" autocomplete="off" novalidate>
+            <div class="form-group">
+              <label for="login-username">Username</label>
+              <div class="field">
+                <span class="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </span>
+                <input type="text" id="login-username" name="username" class="field-input"
+                       placeholder="Masukkan username" maxlength="254" autocomplete="username" required>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label for="login-password">Kata Sandi</label>
+              <div class="field">
+                <span class="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input type="password" id="login-password" name="password" class="field-input"
+                       placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" maxlength="128" autocomplete="current-password" required>
+                <button type="button" id="toggle-password" class="field-action" aria-label="Tampilkan kata sandi">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" id="login-submit" class="login-submit">
+              <span class="login-submit-label">Masuk</span>
+              <svg class="login-submit-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14"/><path d="M13 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </form>
+
+          <p class="login-foot">&copy; 2026 PZEMETER &middot; Sistem monitoring energi</p>
         </div>
-        <div class="form-group" style="margin-top:14px;">
-          <label for="login-password">Kata Sandi</label>
-          <input type="password" id="login-password" name="password" class="form-input"
-                 maxlength="128" autocomplete="current-password" required>
-        </div>
-        <button type="submit" id="login-submit" class="btn btn-primary login-submit">Masuk</button>
-      </form>
+      </section>
     </div>
   </div>
 
