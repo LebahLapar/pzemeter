@@ -158,13 +158,18 @@ function createAuthRouter(generateToken) {
     const authenticated = !!(req.session && req.session.userId);
 
     // (Req 7.3) Sediakan CSRF token untuk frontend bila helper tersedia.
+    // overwrite=true: SELALU terbitkan token baru & timpa cookie CSRF lama.
+    // Tanpa ini, csrf-csrf v3 mencoba memvalidasi cookie lama dan melempar
+    // "invalid csrf token" bila browser membawa cookie basi (mis. dari sesi
+    // sebelumnya), membuat csrfToken null -> POST (logout/settings/factory-
+    // reset) tertolak. Menimpa token aman: token baru tetap terikat sesi.
     let csrfToken = null;
     if (typeof generateToken === 'function') {
       try {
-        csrfToken = generateToken(req, res);
+        csrfToken = generateToken(req, res, true);
       } catch (e) {
         // Jangan gagalkan /me hanya karena pembuatan token CSRF bermasalah.
-        console.error('[auth] gagal membuat CSRF token');
+        console.error('[auth] gagal membuat CSRF token:', e && e.message);
         csrfToken = null;
       }
     }

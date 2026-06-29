@@ -42,6 +42,16 @@ const TG_REPORT_INTERVAL_MS = Number(process.env.TG_REPORT_INTERVAL_MS || 60000)
 
 const app = express();
 const server = http.createServer(app);
+
+// =====================================================================
+// 0) trust proxy - WAJIB saat di belakang reverse proxy (Nginx/Cloudflare).
+//    Tanpa ini, Express melihat koneksi sebagai HTTP (TLS diakhiri di proxy)
+//    sehingga cookie sesi `secure:true` TIDAK terkirim -> login gagal/looping
+//    di produksi. '1' = percaya satu hop proxy (Nginx). Header X-Forwarded-Proto
+//    dari proxy dipakai untuk menentukan req.secure.
+// =====================================================================
+app.set('trust proxy', 1);
+
 // CORS Socket.IO: di produksi batasi ke origin dashboard, di dev izinkan semua (Req 6.3).
 const io = new Server(server, {
   cors: { origin: isProd ? process.env.DASHBOARD_URL : '*' },

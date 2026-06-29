@@ -26,8 +26,11 @@ services:
       - .env
     environment:
       MONGO_URI: mongodb://mongo:27017/pzemeter
+    # Bind ke loopback saja: aplikasi hanya dijangkau dari host yang sama
+    # (mis. Nginx reverse proxy di produksi), TIDAK terbuka ke jaringan luar.
+    # Akses browser lokal via http://localhost:3000 tetap berfungsi.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     # Bind-mount frontend (read-only) agar perubahan HTML/CSS/JS langsung
     # ter-serve tanpa rebuild image. Tujuan container: /frontend
     # (server.js serve path.join(__dirname,'..','..','frontend')).
